@@ -1,3 +1,113 @@
 #!/usr/bin/env coffee
 
-console.log 'hello packuvator!'
+argv = require('optimist')
+	.usage('packuvator - Render Jade/CoffeeScript/Stylus template directory into HTML/JS/CSS template.\nUsage: $0 <input dir> <output zip file>')
+	.demand(2)
+	.argv
+
+fs = require 'fs'
+exec = require('child_process').exec
+
+stylus = require 'stylus'
+jade = require 'jade'
+coffee = require 'coffee-script'
+
+jadeLocals = {}
+
+readDataDir = (dataDir) ->
+	data = {}
+	for filename in fs.readdirSync dataDir
+		if filename.match ///\.(js|coffee)$///
+			moduleName = fs.realpathSync("./#{dataDir}/#{filename}").replace ///\.(js|coffee)$///, ''
+			data[filename.replace ///\.(js|coffee)$///, ''] = require moduleName
+	data
+
+copyFileSync = (srcFile, destFile) ->
+	BUF_LENGTH = 64*1024
+	buff = new Buffer(BUF_LENGTH)
+	fdr = fs.openSync(srcFile, 'r')
+	fdw = fs.openSync(destFile, 'w')
+	bytesRead = 1
+	pos = 0
+	while bytesRead > 0
+		bytesRead = fs.readSync(fdr, buff, 0, BUF_LENGTH, pos)
+		fs.writeSync(fdw,buff,0,bytesRead)
+		pos += bytesRead
+	fs.closeSync(fdr)
+	fs.closeSync(fdw)
+
+handleDir = (inputDir, tmpDir, ignoreList, currentDir = '') ->
+	absCurrentDir = "#{inputDir}/#{currentDir}"
+	absTmpDir = "#{tmpDir}/#{currentDir}"
+	for filename in fs.readdirSync absCurrentDir
+		continue if filename.match ///^\./// # ignore dot-files
+		ignored = no
+		for ignoreEntry in ignoreList
+			if ignoreEntry.test "#{currentDir}/#{filename}"
+				ignored = yes
+		if ignored
+			console.log "ignoring #{currentDir}/#{filename}"
+			continue
+
+		absFilename = "#{absCurrentDir}/#{filename}"
+		if fs.lstatSync(absFilename).isDirectory()
+			console.log "creating directory #{currentDir}/#{filename}"
+			fs.mkdirSync "#{absTmpDir}/#{filename}"
+			handleDir inputDir, tmpDir, ignoreList, "#{currentDir}/#{filename}"
+		else
+			if filename.match ///\.jade$///
+				console.log "rendering jade #{currentDir}/#{filename}"
+				outputFilename = "#{absTmpDir}/#{filename.replace ///\.jade$///, '.html'}"
+				compileFn = jade.compile fs.readFileSync(absFilename, 'utf8'),
+					filename: absFilename
+					pretty: yes
+				fs.writeFileSync outputFilename, compileFn(jadeLocals)
+
+			else if filename.match ///\.styl$///
+				console.log "rendering stylus #{currentDir}/#{filename}"
+				outputFilename = "#{absTmpDir}/#{filename.replace ///\.styl$///, '.css'}"
+				stylus(fs.readFileSync absFilename, 'utf8')
+					.set('paths', [absCurrentDir])
+					.render (err, css) ->
+						throw err if err
+						fs.writeFileSync outputFilename, css
+
+			else if filename.match ///\.coffee$///
+				console.log "rendering coffee #{currentDir}/#{filename}"
+				outputFilename = "#{absTmpDir}/#{filename.replace ///\.coffee$///, '.js'}"
+				fs.writeFileSync outputFilename, coffee.compile fs.readFileSync(absFilename, 'utf8'),
+					bare: yes
+			else
+				console.log "copying arbitrary file #{currentDir}/#{filename}"
+				copyFileSync absFilename, "#{absTmpDir}/#{filename}"
+
+if argv._.length is 2
+	input = argv._[0]
+	output = argv._[1]
+	
+	ignoreListRaw = fs
+		.readFileSync("#{input}/.packuvator_ignore")
+		.toString('utf8')
+		.split("\n")
+	ignoreList = []
+	for ignoreEntry in ignoreListRaw
+		continue if ignoreEntry is ''
+		ignoreList.push new RegExp ignoreEntry
+
+	tmpDir = '/tmp/packuvator'
+	fs.rmdirSync tmpDir if fs.existsSync tmpDir
+	fs.mkdirSync tmpDir
+
+	if fs.existsSync "#{input}/data"
+		jadeLocals = readDataDir "#{input}/data"
+
+	handleDir input, tmpDir, ignoreList
+
+	console.log "zipping..."
+	zipCmd = "BACK=`pwd` ; cd #{tmpDir} ; zip -9 -r -m $BACK/#{output} *"
+	console.log "\# #{zipCmd}"
+	exec zipCmd, (error, stdout, stderr) ->
+		console.log "stdout: #{stdout}"
+		console.log "stderr: #{stderr}"
+		if error isnt null
+			console.log "exec error: #{error}"
