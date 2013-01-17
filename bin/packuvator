@@ -60,7 +60,7 @@ handleDir = (inputDir, tmpDir, ignoreList, currentDir = '') ->
 				outputFilename = "#{absTmpDir}/#{filename.replace ///\.jade$///, '.html'}"
 				compileFn = jade.compile fs.readFileSync(absFilename, 'utf8'),
 					filename: absFilename
-					pretty: yes
+					pretty: yes # ToDo: should be configurable
 				fs.writeFileSync outputFilename, compileFn(jadeLocals)
 
 			else if filename.match ///\.styl$///
@@ -76,7 +76,7 @@ handleDir = (inputDir, tmpDir, ignoreList, currentDir = '') ->
 				console.log "rendering coffee #{currentDir}/#{filename}"
 				outputFilename = "#{absTmpDir}/#{filename.replace ///\.coffee$///, '.js'}"
 				fs.writeFileSync outputFilename, coffee.compile fs.readFileSync(absFilename, 'utf8'),
-					bare: yes
+					bare: yes # ToDo: should be configurable
 			else
 				console.log "copying arbitrary file #{currentDir}/#{filename}"
 				copyFileSync absFilename, "#{absTmpDir}/#{filename}"
@@ -94,17 +94,17 @@ if argv._.length is 2
 		continue if ignoreEntry is ''
 		ignoreList.push new RegExp ignoreEntry
 
-	tmpDir = '/tmp/packuvator'
-	fs.rmdirSync tmpDir if fs.existsSync tmpDir
+	tmpDir = '/tmp/packuvator' # should be automatic and unique
+	fs.rmdirSync tmpDir if fs.existsSync tmpDir # ToDo: remove this
 	fs.mkdirSync tmpDir
 
-	if fs.existsSync "#{input}/data"
+	if fs.existsSync "#{input}/data" # ToDo: should be optional and configurable
 		jadeLocals = readDataDir "#{input}/data"
 
 	handleDir input, tmpDir, ignoreList
 
 	console.log "zipping..."
-	zipCmd = "BACK=`pwd` ; cd #{tmpDir} ; zip -9 -r -m $BACK/#{output} *"
+	zipCmd = "BACK=`pwd` ; cd #{tmpDir} ; zip -9 -r -m $BACK/#{output} *" # ToDo: should be more accurate and bug free
 	console.log "\# #{zipCmd}"
 	exec zipCmd, (error, stdout, stderr) ->
 		console.log "stdout: #{stdout}"
