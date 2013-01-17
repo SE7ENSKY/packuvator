@@ -11,7 +11,7 @@ $ npm install -g packuvator
 ### Example
 
 ```
-pakuvator <input dir> <output dir>
+packuvator <input dir> <output dir>
 ```
 
 ### Features
