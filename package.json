@@ -1,7 +1,7 @@
 {
   "name": "packuvator",
-  "description": "Render Jade/CoffeeScript/Stylus template directory into HTML/JS/CSS template",
-  "version": "0.1.0",
+  "description": "Render Jade/CoffeeScript/Stylus template directory into HTML/JS/CSS zip archive",
+  "version": "0.1.1",
   "author": {
     "name": "Se7enSky studio",
     "email": "info@se7ensky.com"
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/krava/packuvator"
+    "url": "git://github.com/Se7enSky/packuvator"
   },
   "engines": {
     "node": "*"

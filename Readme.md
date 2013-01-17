@@ -1,6 +1,6 @@
 # Packuvator
 
- Render Jade/CoffeeScript/Stylus template directory into HTML/JS/CSS template
+ Render Jade/CoffeeScript/Stylus template directory into HTML/JS/CSS zip archive.
 
 ## Installation
 
@@ -11,16 +11,17 @@ $ npm install -g packuvator
 ### Example
 
 ```
-pakuvator
+pakuvator <input dir> <output dir>
 ```
 
 ### Features
 
  - render Jade templates to HTML files
+ - load jade locals from js/coffee files from data directory
  - render Stylus stylesheets to CSS files
  - render CoffeeScript script to JS files
  - remove source .styl, .coffee, .jade
- - ignore includes, mixins and other 
+ - ignore files such as includes, mixins and other with .packuvator_ignore file
 
 ### Authors
 
