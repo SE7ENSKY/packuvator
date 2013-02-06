@@ -23,6 +23,12 @@ packuvator <input dir> <output dir>
  - remove source .styl, .coffee, .jade
  - ignore files such as includes, mixins and other with .packuvator_ignore file
 
+### Requirements
+ - requires .packuvator_ignore file in input dir. By default, it contains:
+```^\/includes
+^\/layouts
+^\/data```
+
 ### Authors
 
   - [Se7enSky studio](http://www.se7ensky.com/)
