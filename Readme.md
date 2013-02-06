@@ -25,9 +25,11 @@ packuvator <input dir> <output dir>
 
 ### Requirements
  - requires .packuvator_ignore file in input dir. By default, it contains:
-```^\/includes
+```
+^\/includes
 ^\/layouts
-^\/data```
+^\/data
+```
 
 ### Authors
 
